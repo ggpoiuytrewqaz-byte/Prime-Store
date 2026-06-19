@@ -2,69 +2,99 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Luau Academy | منصة تعلم روبلوكس</title>
+    <title>Prime Gateway | المتجر الاحترافي</title>
     <style>
-        :root { --blue: #3b82f6; --dark: #0f172a; --card: #1e293b; --text: #f1f5f9; }
-        body { font-family: 'Cairo', sans-serif; background: var(--dark); color: var(--text); display: flex; margin: 0; }
-
-        /* القائمة الجانبية */
-        .sidebar { width: 250px; background: var(--card); height: 100vh; padding: 20px; border-left: 2px solid #334155; }
-        .nav-item { padding: 15px; margin: 5px 0; cursor: pointer; border-radius: 8px; transition: 0.3s; }
-        .nav-item:hover { background: var(--blue); }
-
-        /* منطقة المحتوى */
-        .content { flex-grow: 1; padding: 40px; }
-        .progress-container { width: 100%; height: 10px; background: #334155; border-radius: 5px; margin-bottom: 20px; }
-        #progress-bar { width: 25%; height: 100%; background: var(--blue); border-radius: 5px; }
-
-        /* الأزرار والأكواد */
-        pre { background: #000; padding: 20px; border-radius: 10px; color: #fbbf24; border-right: 4px solid var(--blue); }
-        .quiz-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background: #334155; border: none; color: white; border-radius: 8px; cursor: pointer; }
+        :root { --bg: #030712; --card: #111827; --accent: #00f2fe; --gold: #d4af37; --text: #f3f4f6; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; }
+        .hidden { display: none !important; }
+        header { padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        .hero { text-align: center; padding: 100px 20px; }
+        .main-container { padding: 50px 10%; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .product-card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: center; }
+        button { background: var(--accent); color: #000; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #admin-panel { background: #1a1a1a; padding: 20px; border-radius: 15px; margin-bottom: 30px; border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
 
-<div class="sidebar">
-    <h2>Luau Academy</h2>
-    <div class="nav-item" onclick="loadContent('vars')">1. المتغيرات</div>
-    <div class="nav-item" onclick="loadContent('events')">2. الأحداث</div>
+<header>
+    <h2>PRIME GATEWAY</h2>
+    <div id="user-info">
+        <a id="login-btn" href="https://discord.com/oauth2/authorize?client_id=1508592285158473851&redirect_uri=https%3A%2F%2Fdelightful-haupia-d66617.netlify.app%2F&response_type=token&scope=identify" style="color:var(--accent)">تسجيل دخول Discord</a>
+        <span id="username-display"></span>
+    </div>
+</header>
+
+<div class="hero">
+    <h1>المتجر الرقمي الفاخر</h1>
+    <p>أفضل الخدمات بلمسة احترافية</p>
 </div>
 
-<div class="content">
-    <div class="progress-container"><div id="progress-bar"></div></div>
-    
-    <div id="main-display">
-        <h1>مرحباً بك في أكاديمية لواء</h1>
-        <p>اختر درساً من القائمة لبدء التعلم.</p>
+<main class="main-container">
+    <div id="admin-panel" class="hidden">
+        <h3>لوحة تحكم المدير (.t7q.)</h3>
+        <input id="pName" placeholder="اسم المنتج">
+        <input id="pPrice" placeholder="السعر">
+        <button onclick="addProd()">إضافة منتج</button>
     </div>
-</div>
+
+    <div class="product-grid" id="product-list"></div>
+</main>
 
 <script>
-    const lessons = {
-        vars: {
-            title: "المتغيرات (Variables)",
-            text: "تستخدم لحفظ القيم. جرب الكود التالي:",
-            code: "local speed = 10",
-            quiz: { q: "ما هي الكلمة لتعريف متغير؟", a: ["local", "var", "int"], correct: 0 }
+    const MY_ID = "1123215043224408105";
+    let products = JSON.parse(localStorage.getItem('prods')) || [{n: "Discord Nitro", p: "29"}];
+    let currentUser = null;
+
+    // استخراج بيانات المستخدم من ديسكورد بعد العودة
+    const fragment = new URLSearchParams(window.location.hash.substring(1));
+    const token = fragment.get('access_token');
+
+    if (token) {
+        fetch('https://discord.com/api/users/@me', { headers: { authorization: `Bearer ${token}` } })
+        .then(res => res.json())
+        .then(user => {
+            currentUser = user;
+            document.getElementById('username-display').innerText = "مرحباً: " + user.username;
+            document.getElementById('login-btn').classList.add('hidden');
+            
+            // التحقق من الصلاحيات
+            if (user.id === MY_ID) {
+                document.getElementById('admin-panel').classList.remove('hidden');
+            }
+            render();
+        });
+    }
+
+    function render() {
+        document.getElementById('product-list').innerHTML = products.map((item, i) => `
+            <div class="product-card">
+                <h3>${item.n}</h3>
+                <p>${item.p} ر.س</p>
+                <button onclick="alert('تم الطلب!')">شراء</button>
+                ${(currentUser && currentUser.id === MY_ID) ? `<button style="background:red; margin-top:5px" onclick="del(${i})">حذف</button>` : ""}
+            </div>
+        `).join('');
+    }
+
+    function addProd() {
+        const n = document.getElementById('pName').value;
+        const p = document.getElementById('pPrice').value;
+        if(n && p) {
+            products.push({n, p});
+            localStorage.setItem('prods', JSON.stringify(products));
+            render();
         }
-    };
-
-    function loadContent(lessonKey) {
-        const lesson = lessons[lessonKey];
-        document.getElementById('main-display').innerHTML = `
-            <h2>${lesson.title}</h2>
-            <p>${lesson.text}</p>
-            <pre>${lesson.code}</pre>
-            <h3>اختبار سريع:</h3>
-            ${lesson.quiz.a.map((ans, i) => `<button class="quiz-btn" onclick="check(${i}, ${lesson.quiz.correct})">${ans}</button>`).join('')}
-        `;
-        document.getElementById('progress-bar').style.width = "50%";
     }
 
-    function check(user, correct) {
-        alert(user === correct ? "✅ صح!" : "❌ خطأ!");
+    function del(i) {
+        products.splice(i, 1);
+        localStorage.setItem('prods', JSON.stringify(products));
+        render();
     }
+
+    render();
 </script>
-
 </body>
 </html>
